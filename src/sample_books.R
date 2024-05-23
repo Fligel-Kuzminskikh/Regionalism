@@ -35,7 +35,8 @@ args <- parse_args(parser)
 
 get_tokens_metadata <- function(books_metadata, min_year_birth, max_year_birth, tokens_directory){
   books_metadata <- books_metadata %>%
-    filter((author_birth_year >= as.numeric(args$min_year_birth)) & (author_birth_year <= as.numeric(args$max_year_birth)))
+    filter((author_birth_year >= as.numeric(args$min_year_birth)) & (
+      author_birth_year <= as.numeric(args$max_year_birth)))
   
   books_metadata$tokens_filename <- lapply(X=books_metadata$filename, FUN=gsub,
                                      pattern="\\.vert$", replacement=".tokens",
@@ -49,6 +50,26 @@ get_tokens_metadata <- function(books_metadata, min_year_birth, max_year_birth, 
   books_metadata$tokens_filepath <- paste0(tokens_directory, "/",
                                      books_metadata$tokens_directory, "/",
                                      books_metadata$tokens_filename)
+  books_metadata$city_edition <- str_extract(
+    string=books_metadata$firstprint_description, pattern="М\\.?\\;?\\s?Л\\.?")
+  books_metadata[is.na(books_metadata$city_edition) == TRUE,
+                 "city_edition"] <- str_extract(string=books_metadata[
+                   is.na(books_metadata$city_edition) == TRUE,
+                   "firstprint_description"], pattern="М\\.?|Л\\.?")
+  books_metadata[is.na(books_metadata$city_edition) == TRUE,
+                 "city_edition"] <- str_extract(string=books_metadata[
+                   is.na(books_metadata$city_edition) == TRUE,
+                   "firstprint_description"], pattern="Л\\.?\\;?\\s?М\\.?")
+  books_metadata[is.na(books_metadata$city_edition) == TRUE,
+                 "city_edition"] <- str_extract(string=books_metadata[
+                   is.na(books_metadata$city_edition) == TRUE,
+                   "firstprint_description"], pattern="СПб\\.?")
+  books_metadata[is.na(books_metadata$city_edition) == TRUE,
+                 "city_edition"] <- str_extract(string=books_metadata[
+                   is.na(books_metadata$city_edition) == TRUE,
+                   "firstprint_description"],
+                   pattern="(?<=\\,\\s)[А-ЯЁ][а-яё]+[\\s\\-(\\sн\\/Д)]?[А-ЯЁ]?[а-яё]+?(?=\\:)"
+                   )
   return(books_metadata)
 }
   
@@ -72,20 +93,22 @@ count_n_tokens <- function(books_metadata){
 visualize_n_tokens <- function(books_metadata, output_plot){
   books_metadata %>%
     ggplot(aes(x=n_tokens)) +
-    geom_histogram(fill="#808080", color="#000000", alpha=0.5) +
+    geom_histogram(fill="#999999", color="#000000", alpha=0.5) +
     theme_minimal() +
-    ggtitle("Распределение количества токенов в текстах") +
-    labs(x="Количество токенов", y="Число книг") +
-    xlim(0, 350000) +
-    theme(text=element_text(size=21)) 
-  ggsave(output_plot, width=16, height=9)
+    labs(x="Количество токенов", y="Количество книг") +
+    xlim(0, 250000) +
+    theme(text=element_text(family="serif")) +
+    theme(text=element_text(size=16))
+  ggsave(output_plot, width=8, height=6)
 }
 
 
 main <- function(args){
   books_metadata <- read.csv(file=args$in_file)
-  books_metadata <- get_tokens_metadata(books_metadata=books_metadata, min_year_birth=args$min_year_birth,
-                                        max_year_birth=args$max_year_birth, tokens_directory=args$tok_dir)
+  books_metadata <- get_tokens_metadata(books_metadata=books_metadata,
+                                        min_year_birth=args$min_year_birth,
+                                        max_year_birth=args$max_year_birth,
+                                        tokens_directory=args$tok_dir)
   books_metadata <- count_n_tokens(books_metadata=books_metadata)
   visualize_n_tokens(books_metadata=books_metadata, output_plot=args$out_plot)
   fwrite(books_metadata, file=args$out_file)
