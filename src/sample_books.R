@@ -50,26 +50,6 @@ get_tokens_metadata <- function(books_metadata, min_year_birth, max_year_birth, 
   books_metadata$tokens_filepath <- paste0(tokens_directory, "/",
                                      books_metadata$tokens_directory, "/",
                                      books_metadata$tokens_filename)
-  books_metadata$city_edition <- str_extract(
-    string=books_metadata$firstprint_description, pattern="М\\.?\\;?\\s?Л\\.?")
-  books_metadata[is.na(books_metadata$city_edition) == TRUE,
-                 "city_edition"] <- str_extract(string=books_metadata[
-                   is.na(books_metadata$city_edition) == TRUE,
-                   "firstprint_description"], pattern="М\\.?|Л\\.?")
-  books_metadata[is.na(books_metadata$city_edition) == TRUE,
-                 "city_edition"] <- str_extract(string=books_metadata[
-                   is.na(books_metadata$city_edition) == TRUE,
-                   "firstprint_description"], pattern="Л\\.?\\;?\\s?М\\.?")
-  books_metadata[is.na(books_metadata$city_edition) == TRUE,
-                 "city_edition"] <- str_extract(string=books_metadata[
-                   is.na(books_metadata$city_edition) == TRUE,
-                   "firstprint_description"], pattern="СПб\\.?")
-  books_metadata[is.na(books_metadata$city_edition) == TRUE,
-                 "city_edition"] <- str_extract(string=books_metadata[
-                   is.na(books_metadata$city_edition) == TRUE,
-                   "firstprint_description"],
-                   pattern="(?<=\\,\\s)[А-ЯЁ][а-яё]+[\\s\\-(\\sн\\/Д)]?[А-ЯЁ]?[а-яё]+?(?=\\:)"
-                   )
   return(books_metadata)
 }
   
